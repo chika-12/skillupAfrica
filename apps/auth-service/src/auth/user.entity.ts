@@ -6,6 +6,8 @@ import {
   Column,
 } from 'typeorm';
 
+import { UserRole } from './enums/user-role.enum';
+
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn('uuid')
@@ -20,7 +22,7 @@ export class User {
   @Column()
   password: string;
 
-  @Column()
+  @Column({ default: UserRole.STUDENT })
   role: string;
 
   @Column({ nullable: true })

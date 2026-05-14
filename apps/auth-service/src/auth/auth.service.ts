@@ -6,6 +6,12 @@ import { CreateUserDTO } from './dto/create-user.dto';
 import { EmailService } from '../email-service/email.service';
 import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
+import { UserRole } from './enums/user-role.enum';
+
+interface JwtPayload {
+  id: string;
+  role: string;
+}
 
 @Injectable()
 export class AuthService {
@@ -14,8 +20,10 @@ export class AuthService {
     private emailService: EmailService,
     private jwtService: JwtService,
   ) {}
-  async register(req: CreateUserDTO): Promise<User | null> {
-    const { name, email, password, role } = req;
+  async register(
+    req: CreateUserDTO,
+  ): Promise<{ status: string; message: string }> {
+    const { name, email, password } = req;
     const existingUser: User | null = await this.UserRepository.findOne({
       where: {
         email,
@@ -35,7 +43,7 @@ export class AuthService {
       name,
       email,
       password: encryptedPassword,
-      role: 'student',
+      role: UserRole.STUDENT,
       isVerified: false,
       verificationToken,
     });
@@ -45,14 +53,17 @@ export class AuthService {
       'Token Verification',
       verificationToken,
     );
-    return user;
+    return {
+      status: 'Success',
+      message: 'Please confirm your email',
+    };
   }
-  generateRefreshToken(payload: object) {
+  generateRefreshToken(payload: JwtPayload) {
     return this.jwtService.sign(payload, {
       expiresIn: '7d',
     });
   }
-  generateAccessToken(payload: object) {
+  generateAccessToken(payload: JwtPayload) {
     return this.jwtService.sign(payload, {
       expiresIn: '15m',
     });
