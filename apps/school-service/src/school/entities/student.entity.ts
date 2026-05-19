@@ -33,6 +33,12 @@ export class Student {
   @Column({ default: true })
   is_active: boolean;
 
+  @Column({ nullable: true })
+  parent_phone: string | null;
+
+  @Column({ nullable: true })
+  student_reg_no: string | null;
+
   @UpdateDateColumn()
   updatedAt: Date;
 
