@@ -21,14 +21,14 @@ export class Student {
   @Column({ default: false })
   is_suspended: boolean;
 
-  @Column({ nullable: true })
-  reason_for_suspension: string;
+  @Column({ type: 'varchar', nullable: true })
+  reason_for_suspension: string | null;
 
   @Column({ type: 'timestamp', nullable: true })
-  suspension_end_date: Date;
+  suspension_end_date: Date | null;
 
   @Column({ type: 'timestamp', nullable: true })
-  suspension_start_date: Date;
+  suspension_start_date: Date | null;
 
   @Column({ default: true })
   is_active: boolean;

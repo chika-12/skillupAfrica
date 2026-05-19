@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsUUID } from 'class-validator';
+import { IsNotEmpty, IsUUID, IsPhoneNumber, IsOptional } from 'class-validator';
 
 export class CreateStudentDto {
   @IsNotEmpty()
@@ -8,4 +8,11 @@ export class CreateStudentDto {
   @IsNotEmpty()
   @IsUUID()
   school_id: string;
+
+  @IsOptional()
+  @IsPhoneNumber()
+  parent_phone?: string;
+
+  @IsOptional()
+  student_reg_no?: string;
 }
