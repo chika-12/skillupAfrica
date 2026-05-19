@@ -40,6 +40,15 @@ export class User {
   @Column({ default: false })
   isVerified: boolean;
 
+  @Column({ type: 'varchar', unique: true, nullable: true })
+  username: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  phone: string | null;
+
+  @Column({ default: false })
+  mustResetPassword: boolean;
+
   @CreateDateColumn()
   createdAt: Date;
 
