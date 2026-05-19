@@ -25,6 +25,9 @@
     "strictBindCallApply": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {},
-    "types": ["jest", "node"]
+    "types": [
+      "jest",
+      "node"
+    ]
   }
 }

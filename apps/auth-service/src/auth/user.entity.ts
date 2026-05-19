@@ -22,14 +22,17 @@ export class User {
   @Column()
   password: string;
 
-  @Column({ default: UserRole.STUDENT })
-  role: string;
+  @Column({ type: 'enum', enum: UserRole, default: UserRole.STUDENT })
+  role: UserRole;
 
-  @Column({ nullable: true })
-  verificationToken: string;
+  @Column({ type: 'timestamp', nullable: true })
+  verificationTokenExpiry: Date | null;
 
-  @Column({ nullable: true })
-  refreshToken: string;
+  @Column({ type: 'varchar', nullable: true })
+  verificationToken: string | null;
+
+  @Column({ type: 'varchar', nullable: true })
+  refreshToken: string | null;
 
   @Column({ default: true })
   isActive: boolean;
