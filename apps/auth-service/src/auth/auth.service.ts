@@ -8,6 +8,7 @@ import * as bcrypt from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
 import { UserRole } from './enums/user-role.enum';
 import { RpcException } from '@nestjs/microservices';
+import { CreateManagedUserDto } from './dto/create-managed-user.dto';
 
 interface JwtPayload {
   id: string;
@@ -146,7 +147,11 @@ export class AuthService {
   async login(
     email: string,
     password: string,
-  ): Promise<{ accessToken: string; refreshToken: string }> {
+  ): Promise<{
+    accessToken: string;
+    refreshToken: string;
+    mustResetPassword?: boolean;
+  }> {
     const user = await this.UserRepository.findOne({
       where: { email },
     });
@@ -175,7 +180,11 @@ export class AuthService {
     const accessToken = this.generateAccessToken(load);
     user.refreshToken = await bcrypt.hash(refreshToken, 10);
     await this.UserRepository.save(user);
-    return { refreshToken, accessToken };
+    return {
+      refreshToken,
+      accessToken,
+      mustResetPassword: user.mustResetPassword,
+    };
   }
 
   async refreshTokens(refreshToken: string): Promise<{ accessToken: string }> {
@@ -227,6 +236,61 @@ export class AuthService {
     return {
       status: 'Success',
       message: 'Logged out successfully',
+    };
+  }
+
+  async createManagedUser(dto: CreateManagedUserDto) {
+    const { name, email, phone, role, username } = dto;
+
+    if (role === UserRole.SCHOOL_ADMIN && !email) {
+      throw new RpcException({
+        statusCode: 400,
+        message: 'Email is required for school admin users',
+      });
+    }
+
+    const existingUser = await this.UserRepository.findOne({
+      where: { username },
+    });
+
+    if (existingUser) {
+      throw new RpcException({
+        statusCode: 409,
+        message: 'Username already exists',
+      });
+    }
+
+    if (email) {
+      const existingEmailUser = await this.UserRepository.findOne({
+        where: { email },
+      });
+      if (existingEmailUser) {
+        throw new RpcException({
+          statusCode: 409,
+          message: 'Email already exists',
+        });
+      }
+    }
+    const generatedPassword = Math.random().toString(36).slice(-8);
+    const encryptedPassword = await bcrypt.hash(generatedPassword, 10);
+    const user = this.UserRepository.create({
+      name,
+      email,
+      phone,
+      role: role,
+      username: username,
+      password: encryptedPassword,
+      mustResetPassword: true,
+      isVerified: true,
+    });
+    await this.UserRepository.save(user);
+
+    return {
+      status: 'Success',
+      userId: user.id,
+      username: user.username,
+      temporaryPassword: generatedPassword,
+      role: user.role,
     };
   }
 }

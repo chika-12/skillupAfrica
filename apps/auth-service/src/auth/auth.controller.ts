@@ -7,6 +7,8 @@ import { TokenVerificationDTO } from './dto/tokenVerification.dto';
 import { ResendEmailTokenDTO } from './dto/resendEmailToken.dto';
 import { RefreshTokenDTO } from './dto/refreshToken.dto';
 import { LogoutDTO } from './dto/logout.dto';
+import { CreateManagedUserDto } from './dto/create-managed-user.dto';
+import { ResetPasswordDTO } from './dto/reset-password.dto';
 
 @Controller()
 export class AuthController {
@@ -40,5 +42,18 @@ export class AuthController {
   @MessagePattern('auth.logout')
   async logout(@Payload() body: LogoutDTO) {
     return this.authService.logout(body.user_id);
+  }
+
+  @MessagePattern('auth.create-managed-user')
+  async createManagedUser(@Payload() body: CreateManagedUserDto) {
+    return this.authService.createManagedUser(body);
+  }
+  @MessagePattern('auth.reset-password')
+  async resetPassword(@Payload() body: ResetPasswordDTO) {
+    return this.authService.resetPassword(
+      body.userId,
+      body.currentPassword,
+      body.newPassword,
+    );
   }
 }
