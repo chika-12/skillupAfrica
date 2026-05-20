@@ -49,8 +49,8 @@ export class School {
   @OneToMany(() => Student, (student) => student.school)
   students: Student[];
 
-  @Column({ nullable: true })
-  reason_for_deactivation: string;
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  reason_for_deactivation: string | null;
 
   @Column({ type: 'timestamp', nullable: true })
   deactivated_until: Date | null;

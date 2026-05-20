@@ -12,6 +12,9 @@ export class Student {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Column({ unique: true })
+  username: string;
+
   @Column()
   user_id: string;
 
