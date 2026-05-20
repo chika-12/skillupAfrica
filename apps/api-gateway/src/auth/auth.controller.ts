@@ -5,6 +5,7 @@ import {
   Post,
   UseGuards,
   Request,
+  ForbiddenException,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
@@ -17,6 +18,8 @@ import { LoginDTO } from '../../../auth-service/src/auth/dto/login.dto';
 import { TokenVerificationDTO } from '../../../auth-service/src/auth/dto/tokenVerification.dto';
 import { ResendEmailTokenDTO } from '../../../auth-service/src/auth/dto/resendEmailToken.dto';
 import { RefreshTokenDTO } from '../../../auth-service/src/auth/dto/refreshToken.dto';
+import { CreateManagedUserDto } from '../../../auth-service/src/auth/dto/create-managed-user.dto';
+import { ResetPasswordDTO } from './dto/resetPassword.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -54,6 +57,39 @@ export class AuthController {
   async logout(@Request() req: any) {
     return firstValueFrom(
       this.authClient.send('auth.logout', { user_id: req.user.id }),
+    );
+  }
+
+  @Post('create-managed-user')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.SCHOOL_ADMIN)
+  async createManagedUser(
+    @Request() req: any,
+    @Body() body: CreateManagedUserDto,
+  ) {
+    const callerRole = req.user.role;
+
+    // school admin can only create students
+    if (
+      callerRole === UserRole.SCHOOL_ADMIN &&
+      body.role !== UserRole.STUDENT
+    ) {
+      throw new ForbiddenException('School admin can only create students');
+    }
+
+    return firstValueFrom(
+      this.authClient.send('auth.create-managed-user', body),
+    );
+  }
+  @Post('reset-password')
+  @UseGuards(JwtAuthGuard)
+  async resetPassword(@Request() req: any, @Body() body: ResetPasswordDTO) {
+    return firstValueFrom(
+      this.authClient.send('auth.reset-password', {
+        userId: req.user.id,
+        currentPassword: body.currentPassword,
+        newPassword: body.newPassword,
+      }),
     );
   }
 }

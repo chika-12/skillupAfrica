@@ -293,4 +293,31 @@ export class AuthService {
       role: user.role,
     };
   }
+
+  async resetPassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<{ status: string; message: string }> {
+    const user = await this.UserRepository.findOne({
+      where: { id: userId },
+    });
+    if (!user) {
+      throw new RpcException({ statusCode: 404, message: 'User not found' });
+    }
+    if (!(await bcrypt.compare(currentPassword, user.password))) {
+      throw new RpcException({
+        statusCode: 401,
+        message: 'Current password is incorrect',
+      });
+    }
+    const encryptedNewPassword = await bcrypt.hash(newPassword, 10);
+    user.password = encryptedNewPassword;
+    user.mustResetPassword = false;
+    await this.UserRepository.save(user);
+    return {
+      status: 'Success',
+      message: 'Password reset successfully',
+    };
+  }
 }
