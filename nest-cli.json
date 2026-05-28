@@ -28,6 +28,15 @@
         "tsConfigPath": "apps/auth-service/tsconfig.app.json"
       }
     },
+    "school-service": {
+      "type": "application",
+      "root": "apps/school-service",
+      "entryFile": "main",
+      "sourceRoot": "apps/school-service/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/school-service/tsconfig.app.json"
+      }
+    },
     "skillupAfrica": {
       "type": "application",
       "root": "apps/skillupAfrica",

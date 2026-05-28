@@ -56,4 +56,24 @@ export class AuthController {
       body.newPassword,
     );
   }
+  @MessagePattern('auth.search-user-by-id')
+  async searchUserByID(@Payload() body: { id: string }) {
+    return this.authService.searchUserByID(body.id);
+  }
+  @MessagePattern('auth.search-all-users')
+  async searchAllUsers() {
+    return this.authService.searchAllUsers();
+  }
+  @MessagePattern('auth.delete-user-by-id')
+  async deleteUserById(@Payload() body: { id: string }) {
+    return this.authService.deleteUserById(body.id);
+  }
+  @MessagePattern('auth.search-user-by-email')
+  async searchUserByEmail(@Payload() body: { email: string }) {
+    return this.authService.searchUserByEmail(body.email);
+  }
+  @MessagePattern('auth.deactivate-user')
+  async deactivateUser(@Payload() body: { id: string }) {
+    return this.authService.deactivateUser(body.id);
+  }
 }
