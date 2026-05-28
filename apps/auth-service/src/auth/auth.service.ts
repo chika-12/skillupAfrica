@@ -275,7 +275,7 @@ export class AuthService {
     const encryptedPassword = await bcrypt.hash(generatedPassword, 10);
     const user = this.UserRepository.create({
       name,
-      email,
+      email: email || null,
       phone,
       role: role,
       username: username,
@@ -318,6 +318,58 @@ export class AuthService {
     return {
       status: 'Success',
       message: 'Password reset successfully',
+    };
+  }
+  async searchUserByID(userId: string): Promise<User> {
+    const user = await this.UserRepository.findOne({
+      where: { id: userId },
+    });
+    if (!user) {
+      throw new RpcException({ statusCode: 404, message: 'User not found' });
+    }
+    return user;
+  }
+  async searchAllUsers(): Promise<User[]> {
+    return this.UserRepository.find();
+  }
+  async deleteUserById(
+    userId: string,
+  ): Promise<{ status: string; message: string }> {
+    const user = await this.UserRepository.findOne({
+      where: { id: userId },
+    });
+    if (!user) {
+      throw new RpcException({ statusCode: 404, message: 'User not found' });
+    }
+    await this.UserRepository.remove(user);
+    return {
+      status: 'Success',
+      message: 'User deleted successfully',
+    };
+  }
+  async searchUserByEmail(email: string): Promise<User> {
+    const user = await this.UserRepository.findOne({
+      where: { email },
+    });
+    if (!user) {
+      throw new RpcException({ statusCode: 404, message: 'User not found' });
+    }
+    return user;
+  }
+  async deactivateUser(
+    userId: string,
+  ): Promise<{ status: string; message: string }> {
+    const user = await this.UserRepository.findOne({
+      where: { id: userId },
+    });
+    if (!user) {
+      throw new RpcException({ statusCode: 404, message: 'User not found' });
+    }
+    user.isActive = false;
+    await this.UserRepository.save(user);
+    return {
+      status: 'Success',
+      message: 'User deactivated successfully',
     };
   }
 }

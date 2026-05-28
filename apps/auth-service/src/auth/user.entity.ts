@@ -4,10 +4,12 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   Column,
+  Index,
 } from 'typeorm';
 
 import { UserRole } from './enums/user-role.enum';
-
+@Index(['role'])
+@Index(['verificationToken'])
 @Entity('users')
 export class User {
   @PrimaryGeneratedColumn('uuid')
@@ -16,8 +18,8 @@ export class User {
   @Column()
   name: string;
 
-  @Column({ unique: true })
-  email: string;
+  @Column({ unique: true, nullable: true, type: 'varchar', default: null })
+  email: string | null;
 
   @Column()
   password: string;

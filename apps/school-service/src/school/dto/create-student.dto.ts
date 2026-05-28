@@ -3,11 +3,11 @@ import { IsNotEmpty, IsUUID, IsPhoneNumber, IsOptional } from 'class-validator';
 export class CreateStudentDto {
   @IsNotEmpty()
   @IsUUID()
-  user_id: string;
+  userId: string;
 
   @IsNotEmpty()
   @IsUUID()
-  school_id: string;
+  schoolId: string;
 
   @IsNotEmpty()
   username: string;

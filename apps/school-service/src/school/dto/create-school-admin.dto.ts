@@ -3,9 +3,9 @@ import { IsNotEmpty, IsUUID } from 'class-validator';
 export class CreateSchoolAdminDto {
   @IsUUID()
   @IsNotEmpty()
-  user_id: string;
+  userId: string;
 
   @IsUUID()
   @IsNotEmpty()
-  school_id: string;
+  schoolId: string;
 }

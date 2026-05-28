@@ -7,6 +7,7 @@ import { Injectable } from '@nestjs/common';
 import { CreateSchoolDto } from './dto/create-school.dto';
 import { RpcException } from '@nestjs/microservices';
 import { CreateStudentDto } from './dto/create-student.dto';
+import { SuspendStudentDto } from './dto/supende-student.dto';
 //import { UpdateSchoolDto } from './dto/update-school.dto';
 
 @Injectable()
@@ -31,6 +32,7 @@ export class SchoolService {
       });
     }
     const newSchool = this.schoolRepository.create(createSchoolDto);
+    newSchool.is_active = true;
     const savedSchool = await this.schoolRepository.save(newSchool);
     return {
       status: 'success',
@@ -91,12 +93,21 @@ export class SchoolService {
     if (!school) {
       throw new RpcException({ statusCode: 404, message: 'School not found' });
     }
+    if (school.is_active === false) {
+      throw new RpcException({
+        statusCode: 400,
+        message: 'School is inactive',
+      });
+    }
     return school;
   }
   async getAllSchools(): Promise<School[]> {
-    return await this.schoolRepository.find({
+    const schools = await this.schoolRepository.find({
+      where: { is_active: true },
       relations: ['admins', 'students'],
     });
+
+    return schools;
   }
 
   async getSchoolAdmins(schoolId: string): Promise<SchoolAdmin[]> {
@@ -110,12 +121,13 @@ export class SchoolService {
     return school.admins;
   }
 
-  async createStudent(
-    schoolId: string,
-    studentData: CreateStudentDto,
-  ): Promise<{ status: string; student_id: string; message: string }> {
+  async createStudent(studentData: CreateStudentDto): Promise<{
+    status: string;
+    student_id: string;
+    message: string;
+  }> {
     const school = await this.schoolRepository.findOne({
-      where: { id: schoolId },
+      where: { id: studentData.schoolId },
       relations: ['students'],
     });
     if (!school) {
@@ -137,7 +149,10 @@ export class SchoolService {
     }
 
     const existingStudent = await this.studentRepository.findOne({
-      where: { username: studentData.username, school: { id: schoolId } },
+      where: {
+        username: studentData.username,
+        school: { id: studentData.schoolId },
+      },
     });
     if (existingStudent) {
       throw new RpcException({
@@ -147,10 +162,15 @@ export class SchoolService {
     }
 
     const newStudent = this.studentRepository.create({
-      ...studentData,
+      user_id: studentData.userId,
+      username: studentData.username,
+      parent_phone: studentData.parent_phone,
+      student_reg_no: studentData.student_reg_no,
       school: school,
     });
+
     const savedStudent = await this.studentRepository.save(newStudent);
+    //console.log('saved student', savedStudent);
     return {
       status: 'success',
       student_id: savedStudent.id,
@@ -178,47 +198,38 @@ export class SchoolService {
     }
     return student;
   }
-  async getStudentSchool(studentId: string): Promise<School> {
-    const student = await this.studentRepository.findOne({
-      where: { id: studentId },
-      relations: ['school'],
-    });
-    if (!student) {
-      throw new RpcException({ statusCode: 404, message: 'Student not found' });
-    }
-    return student.school;
-  }
-  async getStudentSuspensionStatus(studentId: string): Promise<{
-    is_suspended: boolean;
-    reason_for_suspension: string | null;
-  }> {
-    const student = await this.studentRepository.findOne({
-      where: { id: studentId },
-    });
-    if (!student) {
-      throw new RpcException({ statusCode: 404, message: 'Student not found' });
-    }
-    return {
-      is_suspended: student.is_suspended,
-      reason_for_suspension: student.reason_for_suspension,
-    };
-  }
+
+  // async getStudentSuspensionStatus(studentId: string): Promise<{
+  //   is_suspended: boolean;
+  //   reason_for_suspension: string | null;
+  // }> {
+  //   const student = await this.studentRepository.findOne({
+  //     where: { id: studentId },
+  //   });
+  //   if (!student) {
+  //     throw new RpcException({ statusCode: 404, message: 'Student not found' });
+  //   }
+  //   return {
+  //     is_suspended: student.is_suspended,
+  //     reason_for_suspension: student.reason_for_suspension,
+  //   };
+  // }
 
   async suspendStudent(
-    studentId: string,
-    reason: string,
-    endDate?: Date,
+    susData: SuspendStudentDto,
   ): Promise<{ status: string; message: string }> {
     const student = await this.studentRepository.findOne({
-      where: { id: studentId },
+      where: { id: susData.studentId },
     });
     if (!student) {
       throw new RpcException({ statusCode: 404, message: 'Student not found' });
     }
     student.is_suspended = true;
-    student.reason_for_suspension = reason;
+    student.reason_for_suspension = susData.reason;
     student.suspension_start_date = new Date();
-    student.suspension_end_date = endDate || null;
+    student.suspension_end_date = susData.endDate
+      ? new Date(susData.endDate)
+      : null;
     await this.studentRepository.save(student);
     return {
       status: 'success',
@@ -285,7 +296,7 @@ export class SchoolService {
   ): Promise<{ status: string; message: string }> {
     const school = await this.schoolRepository.findOne({
       where: { id: schoolId },
-      relations: ['students'],
+      relations: ['students', 'admins'],
     });
     if (!school) {
       throw new RpcException({ statusCode: 404, message: 'School not found' });
@@ -297,6 +308,13 @@ export class SchoolService {
         message: 'Cannot delete school with active students',
       });
     }
+    if (school.admins.length > 0) {
+      throw new RpcException({
+        statusCode: 400,
+        message: 'Cannot delete school with active admins',
+      });
+    }
+
     await this.schoolRepository.remove(school);
     return {
       status: 'success',
@@ -321,25 +339,27 @@ export class SchoolService {
   }
   async deleteSchoolAdmin(
     adminId: string,
-  ): Promise<{ status: string; message: string }> {
+  ): Promise<{ status: string; message: string; userId: string }> {
     const admin = await this.schoolAdminRepository.findOne({
       where: { id: adminId },
     });
     if (!admin) {
       throw new RpcException({
         statusCode: 404,
-        message: 'School admin not found',
+        message: 'This user is not a school admin',
       });
     }
+    const userId = admin.user_id;
     await this.schoolAdminRepository.remove(admin);
     return {
       status: 'success',
       message: 'School admin deleted successfully',
+      userId: userId,
     };
   }
   async updateSchool(
     schoolId: string,
-    updateData: Partial<CreateSchoolDto>,
+    schoolData: Partial<CreateSchoolDto>,
   ): Promise<{ status: string; message: string }> {
     const school = await this.schoolRepository.findOne({
       where: { id: schoolId },
@@ -347,11 +367,39 @@ export class SchoolService {
     if (!school) {
       throw new RpcException({ statusCode: 404, message: 'School not found' });
     }
-    Object.assign(school, updateData);
+    Object.assign(school, schoolData);
     await this.schoolRepository.save(school);
     return {
       status: 'success',
       message: 'School updated successfully',
     };
+  }
+  async getAdminById(adminId: string): Promise<SchoolAdmin> {
+    const admin = await this.schoolAdminRepository.findOne({
+      where: { id: adminId },
+      relations: ['school'],
+    });
+    if (!admin) {
+      throw new RpcException({
+        statusCode: 404,
+        message: 'This user is not a school admin',
+      });
+    }
+    return admin;
+  }
+  async searchSchoolByEmail(email: string): Promise<School> {
+    const school = await this.schoolRepository.findOne({
+      where: { email: email },
+    });
+    if (!school) {
+      throw new RpcException({ statusCode: 404, message: 'School not found' });
+    }
+    return school;
+  }
+  async searchAllAdmins(): Promise<SchoolAdmin[]> {
+    const admins = await this.schoolAdminRepository.find({
+      relations: ['school'],
+    });
+    return admins;
   }
 }

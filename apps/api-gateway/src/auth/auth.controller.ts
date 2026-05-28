@@ -6,6 +6,8 @@ import {
   UseGuards,
   Request,
   ForbiddenException,
+  Get,
+  Delete,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
@@ -90,6 +92,32 @@ export class AuthController {
         currentPassword: body.currentPassword,
         newPassword: body.newPassword,
       }),
+    );
+  }
+  @Get('search-user-by-id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  async searchUserByID(@Body() body: { id: string }) {
+    return firstValueFrom(this.authClient.send('auth.search-user-by-id', body));
+  }
+  @Get('search-all-users')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  async searchAllUsers() {
+    return firstValueFrom(this.authClient.send('auth.search-all-users', {}));
+  }
+  @Delete('delete-user-by-id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  async deleteUserById(@Body() body: { id: string }) {
+    return firstValueFrom(this.authClient.send('auth.delete-user-by-id', body));
+  }
+  @Get('search-user-by-email')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  async searchUserByEmail(@Body() body: { email: string }) {
+    return firstValueFrom(
+      this.authClient.send('auth.search-user-by-email', body),
     );
   }
 }
