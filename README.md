@@ -499,39 +499,6 @@ All school routes require `Authorization: Bearer <accessToken>`.
 | PUT    | `/school/update-school`       | ADMIN               | Update school fields                                            |
 | POST   | `/school/admin-by-id`         | ADMIN, SCHOOL_ADMIN | Get school admin by ID                                          |
 
----
-
-## Environment Variables
-
-Create a `.env` file at the monorepo root:
-
-```env
-# Auth Database
-AUTH_DB_HOST=localhost
-AUTH_DB_PORT=5432
-AUTH_DB_USERNAME=postgres
-AUTH_DB_PASSWORD=your_password
-AUTH_DB_NAME=skillup_auth
-
-# School Database
-SCHOOL_DB_HOST=localhost
-SCHOOL_DB_PORT=5432
-SCHOOL_DB_USERNAME=postgres
-SCHOOL_DB_PASSWORD=your_password
-SCHOOL_DB_NAME=skillup_school
-
-# JWT
-JWT_SECRET=your_jwt_secret_min_32_chars
-
-# Email (Gmail App Password)
-EMAIL_USER=your_gmail@gmail.com
-EMAIL_PASS=your_app_password_no_spaces
-```
-
-> **Note:** For `EMAIL_PASS`, generate a Gmail App Password — do not use your actual Gmail password.
-
----
-
 ## Getting Started
 
 ### Prerequisites
